@@ -15,6 +15,7 @@ export default function PageBreadcrumb({ pageTitle, items = [] }) {
           <li>
             <Link
               to="/dashboard"
+              onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })}
               className="flex items-center gap-1 hover:text-brand-500 dark:hover:text-brand-400 transition-colors"
             >
               <Home className="w-3.5 h-3.5" />

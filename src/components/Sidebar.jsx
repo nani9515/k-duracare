@@ -241,7 +241,11 @@ export default function Sidebar() {
     >
       {/* Sidebar Header with Brand */}
       <div className="flex h-18 items-center justify-between border-b border-gray-100 px-5 dark:border-gray-800">
-        <NavLink to="/dashboard" className="flex items-center gap-3 overflow-hidden">
+        <NavLink
+          to="/dashboard"
+          onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })}
+          className="flex items-center gap-3 overflow-hidden"
+        >
           <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-theme-sm ring-4 ring-brand-50 dark:ring-brand-500/10">
             <img src="/images/logo/kanakadurga-hospital.jpg" alt="Kanakadurga Hospital logo" className="h-full w-full object-cover" />
           </div>
@@ -380,6 +384,14 @@ export default function Sidebar() {
                     <li key={item.label}>
                       <NavLink
                         to={item.path}
+                        onClick={() => {
+                          if (item.path === '/dashboard') {
+                            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                          }
+                          if (isMobileOpen) {
+                            toggleMobileSidebar();
+                          }
+                        }}
                         className={`menu-item group ${
                           isActive ? 'menu-item-active font-semibold' : 'menu-item-inactive'
                         } ${isCollapsedView ? 'justify-center px-0' : ''}`}
