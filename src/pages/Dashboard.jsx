@@ -72,12 +72,21 @@ function AIChat() {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const bottomRef = useRef(null);
+  const chatScrollRef = useRef(null);
   const historyRef = useRef([]);
+  const isFirstRender = useRef(true);
 
   const QUICK = ["Today's staffing status?", 'Departments under-staffed?', 'Pending leave requests?', 'Camera alert summary'];
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   const send = async (text) => {
     const q = text || input;
@@ -117,7 +126,7 @@ function AIChat() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+      <div ref={chatScrollRef} className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[88%] rounded-xl px-3.5 py-2.5 text-xs leading-relaxed ${
@@ -136,7 +145,6 @@ function AIChat() {
             ))}
           </div>
         )}
-        <div ref={bottomRef} />
       </div>
 
       {/* Quick prompts */}
@@ -176,6 +184,10 @@ function AIChat() {
 export default function Dashboard() {
   const { user, hasPermission, ROLES } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, []);
 
   // Role-based routing
   if (user?.role === ROLES.DOCTOR || user?.role === 'Doctor / Consultant' || user?.role === 'Doctor') return <DoctorDashboard />;

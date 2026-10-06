@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Video, WifiOff, Sparkles, AlertTriangle, Settings, RefreshCw, Search } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { Video, WifiOff, Sparkles, AlertTriangle, Settings, RefreshCw, Search, Shield } from 'lucide-react';
 import { cameras, cameraAlerts } from '../data/cameras';
 import { toast } from 'react-hot-toast';
 import PageBreadcrumb from '../components/common/PageBreadcrumb';
@@ -22,7 +23,7 @@ const ALERT_BADGE = {
 function CameraFeedCard({ camera, onClick }) {
   const [blink, setBlink] = useState(false);
   const s = STATUS_CFG[camera.status] || STATUS_CFG.Offline;
-  const isOn = camera.status === 'Online';
+  const isOn = camera.status === 'Online' || Boolean(camera.videoUrl);
 
   useEffect(() => {
     if (!isOn || !camera.aiActive) return;
@@ -37,6 +38,18 @@ function CameraFeedCard({ camera, onClick }) {
     >
       {/* Video surface */}
       <div className="relative aspect-video overflow-hidden bg-gray-950">
+        {/* Demo Video Stream */}
+        {camera.videoUrl ? (
+          <video
+            src={camera.videoUrl}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className={`absolute inset-0 h-full w-full object-cover ${camera.status === 'Degraded' ? 'opacity-80 contrast-125' : ''}`}
+          />
+        ) : null}
+
         {/* Scan lines */}
         {isOn && (
           <div
@@ -72,19 +85,40 @@ function CameraFeedCard({ camera, onClick }) {
           </>
         )}
         {/* Offline overlay */}
-        {!isOn && (
+        {!isOn && !camera.videoUrl && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5">
             <WifiOff className="h-5 w-5 text-gray-600" />
             <span className="text-[9px] font-bold uppercase tracking-widest text-gray-600">Offline</span>
           </div>
         )}
         {/* Camera ID */}
-        <span className="absolute bottom-1.5 left-2 font-mono text-[8px] text-indigo-400/70">{camera.id}</span>
+        <span className="absolute bottom-1.5 left-2 font-mono text-[8px] text-white/90 drop-shadow-sm">{camera.id}</span>
         {/* Status pill */}
         <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 backdrop-blur-sm">
           <div style={{ width: 5, height: 5, borderRadius: '50%', background: (STATUS_CFG[camera.status] || STATUS_CFG.Offline).dot, boxShadow: isOn ? `0 0 6px ${(STATUS_CFG[camera.status] || STATUS_CFG.Offline).dot}` : 'none' }} />
           <span className="text-[8px] font-bold uppercase tracking-wide text-white/80">{camera.status}</span>
         </div>
+        {/* Stream Resolution & FPS */}
+        {isOn && (
+          <span className="absolute top-2 right-12 font-mono text-[7.5px] text-white/60 tracking-wider">
+            {camera.fps} FPS · {camera.resolution}
+          </span>
+        )}
+        {/* Security Entrance HUD Badge */}
+        {camera.securityBadge && isOn && (
+          <div className="absolute left-2 top-8 z-10 flex items-center gap-1">
+            <span className={`flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-[7.5px] font-bold tracking-wider backdrop-blur-sm border shadow-xs ${
+              camera.id === 'CAM-ER-01'
+                ? 'bg-red-950/85 text-red-300 border-red-500/60'
+                : camera.id === 'CAM-SEC-01'
+                ? 'bg-amber-950/85 text-amber-300 border-amber-500/60'
+                : 'bg-emerald-950/85 text-emerald-300 border-emerald-500/60'
+            }`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${camera.id === 'CAM-ER-01' ? 'bg-red-400 animate-ping' : 'bg-current'}`} />
+              {camera.securityBadge}
+            </span>
+          </div>
+        )}
         {/* AI badge */}
         {camera.aiActive && isOn && (
           <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-indigo-600/80 px-2 py-0.5 backdrop-blur-sm">
@@ -100,8 +134,27 @@ function CameraFeedCard({ camera, onClick }) {
 
       {/* Info strip */}
       <div className="px-3 py-2.5">
-        <p className="truncate text-xs font-semibold text-gray-800 dark:text-white">{camera.name}</p>
+        <div className="flex items-center justify-between gap-1.5">
+          <p className="truncate text-xs font-semibold text-gray-800 dark:text-white">{camera.name}</p>
+          {camera.threatLevel && (
+            <span className={`shrink-0 rounded px-1.5 py-0.2 font-mono text-[8.5px] font-semibold ${
+              camera.threatLevel === 'High Priority'
+                ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
+                : camera.threatLevel === 'Monitored'
+                ? 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400'
+                : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
+            }`}>
+              {camera.threatLevel}
+            </span>
+          )}
+        </div>
         <p className="mt-0.5 text-[10px] text-gray-400 dark:text-gray-500">{camera.location} · {camera.floor}</p>
+        {camera.securityStatus && (
+          <p className="mt-1 flex items-center gap-1 font-mono text-[9px] text-emerald-600 dark:text-emerald-400 truncate">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
+            {camera.securityStatus}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -120,28 +173,46 @@ function CameraDetailModal({ camera, onClose }) {
           <Badge variant="light" color={STATUS_CFG[camera.status]?.badgeColor || 'error'} size="sm">{camera.status}</Badge>
         </div>
 
-        {/* Mock video feed */}
+        {/* Video feed */}
         <div className="relative mb-5 aspect-video overflow-hidden rounded-xl bg-gray-950">
-          <div className="pointer-events-none absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'repeating-linear-gradient(0deg, rgba(255,255,255,0.15) 0px, rgba(255,255,255,0.15) 1px, transparent 1px, transparent 3px)' }} />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <Video className="mx-auto mb-2 h-10 w-10 text-indigo-400/40" />
-              <p className="font-mono text-xs tracking-widest text-indigo-400/50">LIVE FEED — {camera.id}</p>
+          {camera.videoUrl ? (
+            <video
+              src={camera.videoUrl}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center">
+                <Video className="mx-auto mb-2 h-10 w-10 text-indigo-400/40" />
+                <p className="font-mono text-xs tracking-widest text-indigo-400/50">LIVE FEED — {camera.id}</p>
+              </div>
             </div>
-          </div>
-          {camera.status === 'Online' && (
+          )}
+          <div className="pointer-events-none absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'repeating-linear-gradient(0deg, rgba(255,255,255,0.15) 0px, rgba(255,255,255,0.15) 1px, transparent 1px, transparent 3px)' }} />
+          {(camera.status === 'Online' || Boolean(camera.videoUrl)) && (
             <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1 backdrop-blur-sm">
               <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
               <span className="text-[9px] font-bold uppercase tracking-widest text-red-400">REC</span>
             </div>
           )}
+          {camera.securityBadge && (
+            <div className="absolute left-3 top-11 flex items-center gap-1.5 rounded-md bg-black/75 px-2.5 py-1 backdrop-blur-sm border border-white/10 font-mono text-[9px] text-white">
+              <Shield className="h-3 w-3 text-brand-400" />
+              {camera.securityBadge}
+            </div>
+          )}
+          <span className="absolute bottom-2 left-3 font-mono text-[10px] text-white/90 drop-shadow-sm">LIVE · {camera.id} · {camera.location}</span>
         </div>
 
         {/* Stats */}
         <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
           {[
-            { label: 'Resolution', value: '1080p' },
-            { label: 'FPS', value: '30' },
+            { label: 'Resolution', value: camera.resolution || '1080p' },
+            { label: 'FPS', value: `${camera.fps} fps` },
             { label: 'Persons Detected', value: camera.persons },
             { label: 'AI Active', value: camera.aiActive ? 'Yes' : 'No' },
           ].map(({ label, value }) => (
@@ -151,6 +222,38 @@ function CameraDetailModal({ camera, onClose }) {
             </div>
           ))}
         </div>
+
+        {/* Security & Access Monitoring Details */}
+        {camera.securityFeatures && (
+          <div className="mb-5 rounded-xl border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-800 dark:bg-white/[0.02]">
+            <div className="mb-2.5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-brand-500" />
+                <span className="text-xs font-bold text-gray-800 dark:text-white">Security & Access Monitoring</span>
+              </div>
+              <span className="rounded-full bg-brand-50 px-2 py-0.5 font-mono text-[10px] font-semibold text-brand-600 dark:bg-brand-500/15 dark:text-brand-400">
+                {camera.securityType}
+              </span>
+            </div>
+
+            <div className="mb-3 flex items-center justify-between rounded-lg border border-emerald-500/20 bg-emerald-50/50 px-3 py-2 text-xs font-mono text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+              <span className="flex items-center gap-1.5 font-semibold">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                {camera.securityStatus}
+              </span>
+              <span className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400">{camera.accessMode}</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              {camera.securityFeatures.map(feat => (
+                <div key={feat} className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300">
+                  <span className="font-bold text-emerald-500">✓</span>
+                  <span>{feat}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex gap-3">
           <Button variant="outline" size="sm" className="flex-1 justify-center" onClick={onClose}>Close</Button>
@@ -164,7 +267,19 @@ function CameraDetailModal({ camera, onClose }) {
 }
 
 export default function Monitor() {
-  const [activeTab, setActiveTab] = useState('cameras');
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(() => {
+    if (location.pathname.includes('/alerts')) return 'alerts';
+    if (location.pathname.includes('/zones')) return 'zones';
+    return 'cameras';
+  });
+
+  useEffect(() => {
+    if (location.pathname.includes('/alerts')) setActiveTab('alerts');
+    else if (location.pathname.includes('/zones')) setActiveTab('zones');
+    else if (location.pathname.includes('/cameras') || location.pathname === '/monitor') setActiveTab('cameras');
+  }, [location.pathname]);
+
   const [search, setSearch] = useState('');
   const [floorFilter, setFloorFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
