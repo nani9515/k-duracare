@@ -301,11 +301,6 @@ export default function Roles() {
                     : 'border-gray-200 bg-white hover:border-brand-300 dark:border-gray-800 dark:bg-white/[0.03] dark:hover:border-brand-500/30'
                 }`}
               >
-                <div
-                  className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl"
-                  style={{ backgroundColor: role.color }}
-                />
-
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div>
                     <Badge variant="light" color={role.badgeColor} size="sm">

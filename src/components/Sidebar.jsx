@@ -18,6 +18,7 @@ import {
   Bell,
   ScrollText,
   Settings,
+  BookOpen,
   ChevronDown,
   LogOut,
   Stethoscope,
@@ -214,6 +215,12 @@ export default function Sidebar() {
           icon: ScrollText,
           path: '/audit',
           module: 'audit',
+        },
+        {
+          label: 'System Docs',
+          icon: BookOpen,
+          path: '/docs',
+          module: 'dashboard',
         },
         {
           label: 'System Settings',

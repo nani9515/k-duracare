@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>K-Duracare System Documentation & Architecture Portal</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              200: '#bae6fd',
+              300: '#7dd3fc',
+              400: '#38bdf8',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+              800: '#0c4a6e',
+              900: '#0a3651',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    html { scroll-behavior: smooth; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+    .nav-active { background-color: rgba(2, 132, 199, 0.1); color: #0284c7; font-weight: 600; border-left: 3px solid #0284c7; }
+    .dark .nav-active { background-color: rgba(56, 189, 248, 0.15); color: #38bdf8; border-left: 3px solid #38bdf8; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- Top Header Navigation -->
+  <header class="sticky top-0 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 lg:px-8 py-3.5 transition-colors">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <a href="/dashboard" class="flex items-center gap-3 group">
+          <div class="w-10 h-10 rounded-xl overflow-hidden bg-white shadow-md ring-2 ring-brand-100 dark:ring-slate-800 group-hover:scale-105 transition-transform flex items-center justify-center">
+            <img src="/images/logo/kanakadurga-hospital.jpg" alt="Kanakadurga Hospital Logo" class="w-full h-full object-cover" />
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-extrabold text-lg text-slate-900 dark:text-white tracking-tight">K-Duracare</span>
+              <span class="bg-brand-100 text-brand-700 dark:bg-brand-900/50 dark:text-brand-300 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">Documentation Portal</span>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Hospital Workforce & Operational Intelligence System</p>
+          </div>
+        </a>
+      </div>
+
+      <!-- Search Input -->
+      <div class="relative flex-1 max-w-md hidden sm:block">
+        <svg class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <input 
+          type="text" 
+          id="globalSearch" 
+          placeholder="Search modules, roles, API endpoints, AI rules..." 
+          class="w-full pl-10 pr-4 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all text-slate-900 dark:text-white placeholder-slate-400"
+          onkeyup="filterDocs()"
+        />
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="toggleDarkMode()" class="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Toggle Theme">
+          <svg id="sunIcon" class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+          <svg id="moonIcon" class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        </button>
+        <a href="/dashboard" class="px-3.5 py-2 text-xs font-semibold rounded-xl bg-brand-600 text-white hover:bg-brand-700 shadow-sm transition flex items-center gap-1.5">
+          <span>Launch Web App</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <div class="max-w-7xl mx-auto px-4 lg:px-8 py-8 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="lg:col-span-3">
+      <div class="sticky top-24 space-y-6">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <h3 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 px-2">Documentation Menu</h3>
+          <nav class="space-y-1 text-xs" id="sideNav">
+            <a href="#overview" class="block px-3 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition nav-item">1. Executive Overview</a>
+            <a href="#architecture" class="block px-3 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition nav-item">2. System Architecture</a>
+            <a href="#rbac" class="block px-3 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition nav-item">3. 22-Role RBAC Matrix</a>
+            <a href="#modules" class="block px-3 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition nav-item">4. System Modules & Features</a>
+            <a href="#ai-surveillance" class="block px-3 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition nav-item">5. AI CCTV & Computer Vision</a>
+            <a href="#ai-service" class="block px-3 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition nav-item">6. Gemini AI Integration</a>
+            <a href="#credentials" class="block px-3 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition nav-item">7. Demo Credentials Directory</a>
+            <a href="#deployment" class="block px-3 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition nav-item">8. Developer & Deployment Guide</a>
+          </nav>
+        </div>
+
+        <div class="bg-gradient-to-br from-brand-500 to-brand-700 text-white rounded-2xl p-5 shadow-lg space-y-3">
+          <div class="inline-flex items-center gap-1.5 bg-white/20 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+            NABH Compliant
+          </div>
+          <h4 class="font-bold text-sm">Need System Support?</h4>
+          <p class="text-xs text-brand-100 leading-relaxed">K-Duracare is designed for Kanakadurga Hospital healthcare workforce administration.</p>
+          <div class="pt-2 text-[11px] font-mono text-brand-200">System Ver: 2.5.0-PROD</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="lg:col-span-9 space-y-12">
+      
+      <!-- Section 1: Overview -->
+      <section id="overview" class="doc-section scroll-mt-24 space-y-4">
+        <div class="border-b border-slate-200 dark:border-slate-800 pb-4">
+          <span class="text-brand-600 dark:text-brand-400 text-xs font-bold uppercase tracking-widest">Section 1</span>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">Executive Overview</h1>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Hospital Workforce Administration & AI Vision Surveillance Platform</p>
+        </div>
+
+        <div class="prose dark:prose-invert max-w-none text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed space-y-4">
+          <p>
+            <strong>K-Duracare</strong> is an enterprise healthcare workforce management and operational intelligence platform designed specifically for <strong>Kanakadurga Nursing Home (A Unit of Dr K B Chowdary Healthcare Providers)</strong>. The system unifies hospital staffing directory management, biometric muster rolls, shift rosters, NABH compliance tracking, automated payroll calculations, and real-time computer vision camera surveillance.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 not-prose my-6">
+            <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold mb-2">326</div>
+              <h4 class="font-bold text-xs text-slate-900 dark:text-white">Active Workforce</h4>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Enrolled across 12 departments including ICU, OT, Nursing, OPD & Support Staff.</p>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold mb-2">22</div>
+              <h4 class="font-bold text-xs text-slate-900 dark:text-white">RBAC Tiers</h4>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Granular access clearance levels from Level 1 Self-Service to Level 5 Super Admin.</p>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div class="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold mb-2">12+</div>
+              <h4 class="font-bold text-xs text-slate-900 dark:text-white">AI Surveillance Cameras</h4>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Continuous vision monitoring for fall detection, restricted zones, and break timers.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 2: Architecture -->
+      <section id="architecture" class="doc-section scroll-mt-24 space-y-4">
+        <div class="border-b border-slate-200 dark:border-slate-800 pb-4">
+          <span class="text-brand-600 dark:text-brand-400 text-xs font-bold uppercase tracking-widest">Section 2</span>
+          <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">System Architecture & Technology Stack</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Technical infrastructure, React core structure, and state management flow</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+            <h3 class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-brand-500"></span> Frontend Layer
+            </h3>
+            <ul class="space-y-2 text-slate-600 dark:text-slate-300">
+              <li class="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5">
+                <span class="font-medium">Framework:</span>
+                <span class="font-mono text-slate-900 dark:text-white">React 18 + Vite 8</span>
+              </li>
+              <li class="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5">
+                <span class="font-medium">Routing:</span>
+                <span class="font-mono text-slate-900 dark:text-white">React Router v7 (Layout & ProtectedRoutes)</span>
+              </li>
+              <li class="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5">
+                <span class="font-medium">Styling Engine:</span>
+                <span class="font-mono text-slate-900 dark:text-white">Tailwind CSS v4 + Autoprefixer</span>
+              </li>
+              <li class="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5">
+                <span class="font-medium">UI Components & Icons:</span>
+                <span class="font-mono text-slate-900 dark:text-white">Lucide React Icons, Custom Badges, Toast</span>
+              </li>
+              <li class="flex justify-between">
+                <span class="font-medium">Data Visualization:</span>
+                <span class="font-mono text-slate-900 dark:text-white">Recharts 3.x (Bar Charts, Area, Pie)</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+            <h3 class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Context & Security Architecture
+            </h3>
+            <ul class="space-y-2 text-slate-600 dark:text-slate-300">
+              <li class="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5">
+                <span class="font-medium">Authentication Context:</span>
+                <span class="font-mono text-slate-900 dark:text-white">AuthContext.jsx (Local persistence + Demo Switcher)</span>
+              </li>
+              <li class="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5">
+                <span class="font-medium">Access Control:</span>
+                <span class="font-mono text-slate-900 dark:text-white">ProtectedRoute Guard & Permission Matrix</span>
+              </li>
+              <li class="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5">
+                <span class="font-medium">Clinical Guard:</span>
+                <span class="font-mono text-slate-900 dark:text-white">canAccessPatient() & Ward Data Scope</span>
+              </li>
+              <li class="flex justify-between">
+                <span class="font-medium">AI Intelligence Engine:</span>
+                <span class="font-mono text-slate-900 dark:text-white">Google Gemini 2.5 Flash API + Mock Fallback</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Component Architecture Flow Diagram -->
+        <div class="bg-slate-900 text-slate-100 rounded-2xl p-5 border border-slate-800 font-mono text-xs overflow-x-auto space-y-2">
+          <div class="text-brand-400 font-bold mb-2">// K-DURACARE COMPONENT & ROUTING FLOW</div>
+          <pre class="text-[11px] leading-relaxed text-slate-300">
+[ App.jsx (Root Router & ThemeProvider) ]
+  ├── AuthProvider (AuthContext.jsx — 22 Roles, Session, Scope Guards)
+  │    ├── Login Page (/login)
+  │    └── AppLayout (/ — Sidebar, TopBar, Dynamic Content Area)
+  │         ├── Dynamic Role Dashboards (/dashboard — Doctor, Nurse, ICU, Admin, Self-Service)
+  │         ├── Workforce & Staff (/employees, /employees/:id, /departments, /roles)
+  │         ├── Attendance & Muster (/attendance, /attendance/history, /attendance/corrections)
+  │         ├── Shifts & Roster (/shifts, /shifts/roster, /shifts/coverage)
+  │         ├── Leave Management (/leave/apply, /leave/requests, /leave/balance, /leave/calendar)
+  │         ├── Payroll & Accounts (/payroll, /payroll/structure, /payroll/process, /payroll/payslips)
+  │         ├── AI Surveillance (/activity, /monitor, /monitor/cameras, /monitor/alerts)
+  │         └── System & Compliance (/analytics, /reports, /audit, /settings, /notifications)
+          </pre>
+        </div>
+      </section>
+
+      <!-- Section 3: RBAC Matrix -->
+      <section id="rbac" class="doc-section scroll-mt-24 space-y-4">
+        <div class="border-b border-slate-200 dark:border-slate-800 pb-4">
+          <span class="text-brand-600 dark:text-brand-400 text-xs font-bold uppercase tracking-widest">Section 3</span>
+          <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">22-Role RBAC Clearance Matrix</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Strict role-based access control, security levels, and clearance scopes</p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+          <div class="p-4 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
+            <span class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase">Clearance Hierarchy Breakdown</span>
+            <div class="flex gap-2 text-[10px]">
+              <span class="bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 px-2 py-0.5 rounded font-bold">Level 5 (Unrestricted)</span>
+              <span class="bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 px-2 py-0.5 rounded font-bold">Level 4 (Executive)</span>
+              <span class="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 px-2 py-0.5 rounded font-bold">Level 3 (Clinical/Ops)</span>
+              <span class="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 px-2 py-0.5 rounded font-bold">Level 2 (Departmental)</span>
+              <span class="bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 px-2 py-0.5 rounded font-bold">Level 1 (Self-Service)</span>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th class="p-3">Role Name</th>
+                  <th class="p-3">Level</th>
+                  <th class="p-3">Primary Category</th>
+                  <th class="p-3">Data Scope</th>
+                  <th class="p-3">Accessible Modules</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-600 dark:text-slate-300">
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <td class="p-3 font-bold text-slate-900 dark:text-white">Super Administrator</td>
+                  <td class="p-3"><span class="bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 px-1.5 py-0.5 rounded font-bold text-[10px]">Level 5</span></td>
+                  <td class="p-3">Executive Admin</td>
+                  <td class="p-3 font-mono text-[11px]">HOSPITAL_ALL</td>
+                  <td class="p-3 text-[11px] font-mono text-brand-600 dark:text-brand-400">All Modules (Unrestricted)</td>
+                </tr>
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <td class="p-3 font-bold text-slate-900 dark:text-white">Hospital Management</td>
+                  <td class="p-3"><span class="bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 px-1.5 py-0.5 rounded font-bold text-[10px]">Level 4</span></td>
+                  <td class="p-3">Executive Board</td>
+                  <td class="p-3 font-mono text-[11px]">HOSPITAL_EXECUTIVE</td>
+                  <td class="p-3 text-[11px]">Dashboard, Departments, Attendance, Shifts, Analytics, Reports</td>
+                </tr>
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <td class="p-3 font-bold text-slate-900 dark:text-white">HR Administrator</td>
+                  <td class="p-3"><span class="bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 px-1.5 py-0.5 rounded font-bold text-[10px]">Level 4</span></td>
+                  <td class="p-3">Administrative Tier</td>
+                  <td class="p-3 font-mono text-[11px]">WORKFORCE_OPS</td>
+                  <td class="p-3 text-[11px]">Workforce, Employees, Departments, Roles, Attendance, Shifts, Leave, Reports</td>
+                </tr>
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <td class="p-3 font-bold text-slate-900 dark:text-white">Payroll Officer</td>
+                  <td class="p-3"><span class="bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 px-1.5 py-0.5 rounded font-bold text-[10px]">Level 3</span></td>
+                  <td class="p-3">Finance & Accounts</td>
+                  <td class="p-3 font-mono text-[11px]">FINANCIAL_PAYROLL</td>
+                  <td class="p-3 text-[11px]">Payroll, Attendance, Leave, Reports</td>
+                </tr>
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <td class="p-3 font-bold text-slate-900 dark:text-white">Doctor / Consultant</td>
+                  <td class="p-3"><span class="bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 px-1.5 py-0.5 rounded font-bold text-[10px]">Level 3</span></td>
+                  <td class="p-3">Medical Tier</td>
+                  <td class="p-3 font-mono text-[11px]">AUTHORIZED_PATIENTS_ONLY</td>
+                  <td class="p-3 text-[11px]">Dashboard, Clinical, Patients, Attendance, Shifts, Leave, Payroll</td>
+                </tr>
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <td class="p-3 font-bold text-slate-900 dark:text-white">Nurse / ICU Staff</td>
+                  <td class="p-3"><span class="bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 px-1.5 py-0.5 rounded font-bold text-[10px]">Level 3</span></td>
+                  <td class="p-3">Medical Tier</td>
+                  <td class="p-3 font-mono text-[11px]">ASSIGNED_WARD_ONLY</td>
+                  <td class="p-3 text-[11px]">Ward Vitals, Telemetry, Attendance, Shifts, Leave</td>
+                </tr>
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <td class="p-3 font-bold text-slate-900 dark:text-white">Security Supervisor</td>
+                  <td class="p-3"><span class="bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 px-1.5 py-0.5 rounded font-bold text-[10px]">Level 3</span></td>
+                  <td class="p-3">Support Tier</td>
+                  <td class="p-3 font-mono text-[11px]">CCTV_SECURITY</td>
+                  <td class="p-3 text-[11px]">CCTV Monitor, Camera Health, Worker Activity, Incident Alerts</td>
+                </tr>
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <td class="p-3 font-bold text-slate-900 dark:text-white">Receptionist / OPD Staff</td>
+                  <td class="p-3"><span class="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300 px-1.5 py-0.5 rounded font-bold text-[10px]">Level 2</span></td>
+                  <td class="p-3">Administrative Tier</td>
+                  <td class="p-3 font-mono text-[11px]">FRONT_DESK_NO_CLINICAL</td>
+                  <td class="p-3 text-[11px]">Patient Registration, OP Tokens, Attendance, Shifts</td>
+                </tr>
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <td class="p-3 font-bold text-slate-900 dark:text-white">Support Staff (Aayah, Sweeper, Dhobi)</td>
+                  <td class="p-3"><span class="bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 px-1.5 py-0.5 rounded font-bold text-[10px]">Level 1</span></td>
+                  <td class="p-3">Support Tier</td>
+                  <td class="p-3 font-mono text-[11px]">SELF_SERVICE</td>
+                  <td class="p-3 text-[11px]">Personal Punch Log, Assigned Roster, Leave Balance</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 4: Modules & Features -->
+      <section id="modules" class="doc-section scroll-mt-24 space-y-4">
+        <div class="border-b border-slate-200 dark:border-slate-800 pb-4">
+          <span class="text-brand-600 dark:text-brand-400 text-xs font-bold uppercase tracking-widest">Section 4</span>
+          <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">Core Modules & Feature Breakdown</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Detailed guide to every workspace view in K-Duracare</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          
+          <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white">1. Dashboard Portal (/dashboard)</h3>
+              <span class="font-mono text-[10px] text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/40 px-2 py-0.5 rounded">Multi-Role Router</span>
+            </div>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+              Dynamically renders customized dashboard widgets based on logged-in user role:
+            </p>
+            <ul class="list-disc pl-4 space-y-1 text-slate-500 dark:text-slate-400">
+              <li><strong>Doctor Dashboard:</strong> Physician patient roster, ICU telemetry alert feed, consult queue.</li>
+              <li><strong>Nurse Dashboard:</strong> Ward bed occupancy, medication administration timers, vitals log.</li>
+              <li><strong>Operations Dashboard:</strong> Staff attendance rates, CCTV camera alerts, department coverage.</li>
+              <li><strong>Employee Self-Service:</strong> Punch status, leave balances, duty roster card.</li>
+            </ul>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white">2. Workforce Directory & Employee 360</h3>
+              <span class="font-mono text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/40 px-2 py-0.5 rounded">/employees & /employees/:id</span>
+            </div>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+              Searchable staff roster with category filters (Medical, Administrative, Support), shift tags, biometric IDs, and individual 360 profile pages featuring AI monthly attendance summaries.
+            </p>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white">3. Attendance & Biometric Muster</h3>
+              <span class="font-mono text-[10px] text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/40 px-2 py-0.5 rounded">/attendance</span>
+            </div>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+              Real-time biometric punch sync, muster roll reconciliation, missing punch regularization review, late entry tracking, and overtime hour logs.
+            </p>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white">4. Shifts, Rosters & NABH Coverage</h3>
+              <span class="font-mono text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/40 px-2 py-0.5 rounded">/shifts</span>
+            </div>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+              Shift master (Morning 07-14, Evening 13-20, Night 19-08, General 09-17:30), weekly departmental duty matrix, and NABH nurse-to-patient ratio compliance indicators.
+            </p>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white">5. Leave Portal & Impact Analysis</h3>
+              <span class="font-mono text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/40 px-2 py-0.5 rounded">/leave</span>
+            </div>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+              Leave application workflow (Casual, Sick, Earned, Maternity), automated AI staffing impact analyzer preventing department understaffing (&lt;80% coverage warnings), and hospital leave calendar.
+            </p>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white">6. Payroll & Financial Processing</h3>
+              <span class="font-mono text-[10px] text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/40 px-2 py-0.5 rounded">/payroll</span>
+            </div>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+              Base salary band configuration, PF/ESI/TDS tax deductions, Loss of Pay (LOP) calculations, overtime payout register, AI payroll anomaly detector, and downloadable PDF-styled payslips.
+            </p>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Section 5: AI Surveillance -->
+      <section id="ai-surveillance" class="doc-section scroll-mt-24 space-y-4">
+        <div class="border-b border-slate-200 dark:border-slate-800 pb-4">
+          <span class="text-brand-600 dark:text-brand-400 text-xs font-bold uppercase tracking-widest">Section 5</span>
+          <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">AI CCTV Surveillance & Computer Vision</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Automated threat detection, worker posture tracking, and hygiene turnaround analytics</p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 text-xs">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <h4 class="font-bold text-sm text-slate-900 dark:text-white">Camera Network Telemetry (/monitor)</h4>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                Monitors 12 continuous CCTV camera feeds covering critical hospital zones: ICU Beds, Emergency Ramp, Operation Theatre Entrance, Pathology Lab, Canteen, and Main Security Gates.
+              </p>
+              <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-1 font-mono text-[11px]">
+                <div class="text-emerald-600 dark:text-emerald-400 font-bold">🟢 CAM-ICU-01 (Online - 30 FPS)</div>
+                <div class="text-emerald-600 dark:text-emerald-400 font-bold">🟢 CAM-OPD-01 (Online - 30 FPS)</div>
+                <div class="text-amber-600 dark:text-amber-400 font-bold">🟡 CAM-ICU-03 (Degraded - Low FPS)</div>
+                <div class="text-rose-600 dark:text-rose-400 font-bold">🔴 CAM-OT-01 (Offline - Maintenance Required)</div>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <h4 class="font-bold text-sm text-slate-900 dark:text-white">Computer Vision Features (/activity)</h4>
+              <ul class="space-y-2 text-slate-600 dark:text-slate-400">
+                <li class="flex items-start gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-brand-500 mt-1.5 shrink-0"></span>
+                  <span><strong>Work-Zone Pose Analysis:</strong> Distinguishes bedside active duty, sitting at vitals terminal, transit walking, and canteen break presence.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-brand-500 mt-1.5 shrink-0"></span>
+                  <span><strong>Break Duration Sensor:</strong> Enforces 30-minute break limit across canteen and pantry zones.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-brand-500 mt-1.5 shrink-0"></span>
+                  <span><strong>Fall Detection & Safety Alerts:</strong> High-confidence pose vector fall alerts in patient zones with instant supervisor alerts.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-brand-500 mt-1.5 shrink-0"></span>
+                  <span><strong>Proximity & Group Interactions:</strong> Tracks staff interaction duration to distinguish quick clinical handovers from prolonged non-work idle conversations.</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 6: AI Service -->
+      <section id="ai-service" class="doc-section scroll-mt-24 space-y-4">
+        <div class="border-b border-slate-200 dark:border-slate-800 pb-4">
+          <span class="text-brand-600 dark:text-brand-400 text-xs font-bold uppercase tracking-widest">Section 6</span>
+          <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">Google Gemini 2.5 Flash AI Service</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Intelligent workforce assistant, prompt grounding, and security scope enforcement</p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm text-xs space-y-4">
+          <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+            The AI Service (<code class="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-mono text-brand-600 dark:text-brand-400">src/services/aiService.js</code>) powers conversational queries, employee profile summaries, leave impact simulations, and payroll anomaly detection using <strong>Google Gemini 2.5 Flash</strong> via <code class="font-mono">@google/generative-ai</code>.
+          </p>
+
+          <div class="bg-slate-900 text-slate-100 p-4 rounded-xl font-mono text-[11px] overflow-x-auto space-y-1">
+            <div class="text-slate-400">// Example AI Security Rule Enforcement (Mock & Live API)</div>
+            <div class="text-amber-400">if (role === 'Receptionist' && query.includes('clinical')) {</div>
+            <div class="text-slate-300 pl-4">return "⛔ Access Denied: Clinical Privacy Restriction — Reception clearance is limited to registration and token queues.";</div>
+            <div class="text-amber-400">}</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 7: Demo Credentials -->
+      <section id="credentials" class="doc-section scroll-mt-24 space-y-4">
+        <div class="border-b border-slate-200 dark:border-slate-800 pb-4">
+          <span class="text-brand-600 dark:text-brand-400 text-xs font-bold uppercase tracking-widest">Section 7</span>
+          <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">Demo Credentials Directory</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Ready-to-use accounts for testing multi-role access controls</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+          
+          <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-slate-900 dark:text-white">Dr. K. B. Chowdary</span>
+              <span class="bg-red-100 text-red-700 dark:bg-red-900/40 text-[9px] font-bold px-1.5 py-0.5 rounded">Level 5</span>
+            </div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">Super Administrator</div>
+            <div class="font-mono text-[11px] pt-1">User: <span class="text-brand-600 dark:text-brand-400">admin</span> | Pass: <span class="text-brand-600 dark:text-brand-400">admin123</span></div>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-slate-900 dark:text-white">Sri P. Venkateswara Rao</span>
+              <span class="bg-purple-100 text-purple-700 dark:bg-purple-900/40 text-[9px] font-bold px-1.5 py-0.5 rounded">Level 4</span>
+            </div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">Hospital Management</div>
+            <div class="font-mono text-[11px] pt-1">User: <span class="text-brand-600 dark:text-brand-400">management</span> | Pass: <span class="text-brand-600 dark:text-brand-400">mgmt123</span></div>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-slate-900 dark:text-white">Mrs. Sunitha Reddy</span>
+              <span class="bg-purple-100 text-purple-700 dark:bg-purple-900/40 text-[9px] font-bold px-1.5 py-0.5 rounded">Level 4</span>
+            </div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">HR Administrator</div>
+            <div class="font-mono text-[11px] pt-1">User: <span class="text-brand-600 dark:text-brand-400">hr</span> | Pass: <span class="text-brand-600 dark:text-brand-400">hr123</span></div>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-slate-900 dark:text-white">Dr. Ravi Shankar</span>
+              <span class="bg-blue-100 text-blue-700 dark:bg-blue-900/40 text-[9px] font-bold px-1.5 py-0.5 rounded">Level 3</span>
+            </div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">Chief Doctor / Consultant</div>
+            <div class="font-mono text-[11px] pt-1">User: <span class="text-brand-600 dark:text-brand-400">doctor</span> | Pass: <span class="text-brand-600 dark:text-brand-400">doc123</span></div>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-slate-900 dark:text-white">Mrs. Lakshmi Devi</span>
+              <span class="bg-blue-100 text-blue-700 dark:bg-blue-900/40 text-[9px] font-bold px-1.5 py-0.5 rounded">Level 3</span>
+            </div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">Nursing Superintendent</div>
+            <div class="font-mono text-[11px] pt-1">User: <span class="text-brand-600 dark:text-brand-400">nurse</span> | Pass: <span class="text-brand-600 dark:text-brand-400">nurse123</span></div>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-slate-900 dark:text-white">Mr. Nagaraju</span>
+              <span class="bg-blue-100 text-blue-700 dark:bg-blue-900/40 text-[9px] font-bold px-1.5 py-0.5 rounded">Level 3</span>
+            </div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">Chief Security Officer</div>
+            <div class="font-mono text-[11px] pt-1">User: <span class="text-brand-600 dark:text-brand-400">security</span> | Pass: <span class="text-brand-600 dark:text-brand-400">security123</span></div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Section 8: Deployment Guide -->
+      <section id="deployment" class="doc-section scroll-mt-24 space-y-4">
+        <div class="border-b border-slate-200 dark:border-slate-800 pb-4">
+          <span class="text-brand-600 dark:text-brand-400 text-xs font-bold uppercase tracking-widest">Section 8</span>
+          <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">Developer & Deployment Guide</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Command reference, environment variables, and build production instructions</p>
+        </div>
+
+        <div class="bg-slate-900 text-slate-100 rounded-2xl p-5 border border-slate-800 text-xs space-y-4 font-mono">
+          <div>
+            <div class="text-slate-400 mb-1">// 1. Install Dependencies & Local Development Server</div>
+            <div class="text-emerald-400">npm install</div>
+            <div class="text-emerald-400">npm run dev</div>
+          </div>
+
+          <div>
+            <div class="text-slate-400 mb-1">// 2. Configure Gemini AI Key (Optional in .env)</div>
+            <div class="text-amber-400">VITE_GEMINI_API_KEY=AIzaSy...</div>
+          </div>
+
+          <div>
+            <div class="text-slate-400 mb-1">// 3. Build Production Distribution</div>
+            <div class="text-emerald-400">npm run build</div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-6 text-center text-xs text-slate-500 dark:text-slate-400">
+    <p>© 2026 Kanakadurga Hospital Healthcare Providers. All rights reserved. K-Duracare System Documentation Portal v2.5.</p>
+  </footer>
+
+  <!-- Script for Theme Toggle, Search Filter, and Scrollspy -->
+  <script>
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+    }
+
+    function filterDocs() {
+      const query = document.getElementById('globalSearch').value.toLowerCase();
+      const sections = document.querySelectorAll('.doc-section');
+      
+      sections.forEach(sec => {
+        const text = sec.textContent.toLowerCase();
+        if (!query || text.includes(query)) {
+          sec.style.display = 'block';
+        } else {
+          sec.style.display = 'none';
+        }
+      });
+    }
+
+    // Scrollspy active state
+    window.addEventListener('scroll', () => {
+      const sections = document.querySelectorAll('.doc-section');
+      const navItems = document.querySelectorAll('.nav-item');
+      let current = '';
+
+      sections.forEach(sec => {
+        const top = sec.offsetTop;
+        if (window.scrollY >= top - 120) {
+          current = sec.getAttribute('id');
+        }
+      });
+
+      navItems.forEach(item => {
+        item.classList.remove('nav-active');
+        if (item.getAttribute('href') === '#' + current) {
+          item.classList.add('nav-active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -21,6 +21,7 @@ import Reports from './pages/Reports';
 import AuditLogs from './pages/AuditLogs';
 import Settings from './pages/Settings';
 import Notifications from './pages/Notifications';
+import Documentation from './pages/Documentation';
 import AccessRestricted from './components/AccessRestricted';
 
 function ScrollToTop() {
@@ -113,6 +114,7 @@ export default function App() {
 
             {/* Notifications & System */}
             <Route path="notifications" element={<Notifications />} />
+            <Route path="docs" element={<Documentation />} />
             <Route path="settings" element={<ProtectedRoute module="settings"><Settings /></ProtectedRoute>} />
             <Route path="audit" element={<ProtectedRoute module="audit"><AuditLogs /></ProtectedRoute>} />
 
