@@ -6,6 +6,7 @@ import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'rec
 import PageBreadcrumb from '../components/common/PageBreadcrumb';
 import Badge from '../components/ui/badge/Badge';
 import Button from '../components/ui/button/Button';
+import { useAuth } from '../context/AuthContext';
 
 const SALARY_STRUCTURES = [
   { grade: 'Senior Doctor', basic: 85000, hra: 25500, da: 8500, allowances: 12000, gross: 131000, pf: 10200, esi: 0, net: 120800, staff: 6 },
@@ -156,6 +157,7 @@ function PayslipModal({ emp, onClose }) {
 }
 
 export default function Payroll() {
+  const { canProcessPayroll } = useAuth();
   const [activeTab, setActiveTab]         = useState('structure');
   const [showPayslip, setShowPayslip]     = useState(false);
   const [selectedEmp, setSelectedEmp]     = useState(null);
@@ -323,29 +325,35 @@ export default function Payroll() {
               ))}
             </div>
 
-            <Button
-              variant={processed ? "success" : "primary"}
-              className="w-full justify-center py-3"
-              disabled={processing || processed}
-              onClick={handleProcess}
-            >
-              {processing ? (
-                <span className="flex items-center gap-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Processing Roster Deductions...
-                </span>
-              ) : processed ? (
-                <span className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4" />
-                  Payroll Finalized for {selectedMonth}
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <Wallet className="w-4 h-4" />
-                  Execute {selectedMonth} Payroll Batch
-                </span>
-              )}
-            </Button>
+            {canProcessPayroll() ? (
+              <Button
+                variant={processed ? "success" : "primary"}
+                className="w-full justify-center py-3"
+                disabled={processing || processed}
+                onClick={handleProcess}
+              >
+                {processing ? (
+                  <span className="flex items-center gap-2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Processing Roster Deductions...
+                  </span>
+                ) : processed ? (
+                  <span className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4" />
+                    Payroll Finalized for {selectedMonth}
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <Wallet className="w-4 h-4" />
+                    Execute {selectedMonth} Payroll Batch
+                  </span>
+                )}
+              </Button>
+            ) : (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300 text-center font-medium">
+                🔒 Payroll Execution Restricted — Finance Clearance Required
+              </div>
+            )}
           </div>
 
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-xs dark:border-gray-800 dark:bg-white/[0.03]">

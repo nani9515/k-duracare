@@ -363,6 +363,7 @@ function MyBalance({ balances }) {
 
 // ─── Leave Request Card ───────────────────────────────────────────────────────
 function LeaveCard({ req, onAction }) {
+  const { canApproveLeave } = useAuth();
   const impact = AI_IMPACTS[req.employeeId];
   const statusColor = req.status === "Approved" ? "success" : req.status === "Rejected" ? "error" : "warning";
 
@@ -420,7 +421,7 @@ function LeaveCard({ req, onAction }) {
           <Badge variant="light" color={statusColor} size="md">
             {req.status}
           </Badge>
-          {req.status === "Pending" && (
+          {req.status === "Pending" && canApproveLeave() && (
             <div className="flex items-center gap-2 mt-1">
               <Button
                 variant="success"

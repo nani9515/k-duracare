@@ -345,11 +345,13 @@ export const DEMO_USERS = [
   }
 ];
 
-// Strict Role-Based Permissions Mapping
+// Strict Role-Based Permissions Mapping (Principle of Least Privilege)
 export const ROLE_PERMISSIONS = {
   [ROLES.SUPER_ADMIN]: [
-    'dashboard', 'workforce', 'employees', 'departments', 'roles',
-    'attendance', 'shifts', 'leave', 'payroll',
+    'dashboard', 'workforce', 'employees', 'add_employee', 'edit_employee',
+    'departments', 'manage_departments', 'roles', 'manage_roles',
+    'attendance', 'attendance_corrections', 'shifts', 'manage_shifts',
+    'leave', 'leave_approvals', 'payroll', 'process_payroll',
     'activity', 'monitor', 'analytics', 'reports', 'settings', 'audit',
     'clinical', 'patients', 'calendar'
   ],
@@ -357,23 +359,25 @@ export const ROLE_PERMISSIONS = {
     'dashboard', 'departments', 'attendance', 'shifts', 'analytics', 'reports', 'calendar'
   ],
   [ROLES.HR_ADMIN]: [
-    'dashboard', 'workforce', 'employees', 'departments', 'roles',
-    'attendance', 'shifts', 'leave', 'reports', 'calendar'
+    'dashboard', 'workforce', 'employees', 'add_employee', 'edit_employee',
+    'departments', 'manage_departments', 'roles', 'manage_roles',
+    'attendance', 'attendance_corrections', 'shifts', 'manage_shifts',
+    'leave', 'leave_approvals', 'reports', 'calendar'
   ],
   [ROLES.PAYROLL_OFFICER]: [
-    'dashboard', 'payroll', 'attendance', 'leave', 'reports'
+    'dashboard', 'payroll', 'process_payroll', 'attendance', 'leave', 'reports', 'calendar'
   ],
   [ROLES.DOCTOR]: [
-    'dashboard', 'clinical', 'patients', 'attendance', 'shifts', 'leave', 'payroll', 'calendar'
+    'dashboard', 'clinical', 'patients', 'attendance', 'shifts', 'leave', 'calendar'
   ],
   [ROLES.NURSE]: [
-    'dashboard', 'clinical', 'patients', 'attendance', 'shifts', 'leave', 'payroll', 'calendar'
+    'dashboard', 'clinical', 'patients', 'attendance', 'shifts', 'leave', 'calendar'
   ],
   [ROLES.ICU_STAFF]: [
     'dashboard', 'clinical', 'patients', 'attendance', 'shifts', 'leave', 'calendar'
   ],
   [ROLES.OPD_STAFF]: [
-    'dashboard', 'attendance', 'shifts', 'leave', 'calendar'
+    'dashboard', 'patients', 'attendance', 'shifts', 'leave', 'calendar'
   ],
   [ROLES.LAB_STAFF]: [
     'dashboard', 'attendance', 'shifts', 'leave', 'calendar'
@@ -388,7 +392,7 @@ export const ROLE_PERMISSIONS = {
     'dashboard', 'attendance', 'shifts', 'leave', 'calendar'
   ],
   [ROLES.HOUSEKEEPING_SUPERVISOR]: [
-    'dashboard', 'workforce', 'attendance', 'shifts', 'leave', 'reports', 'calendar'
+    'dashboard', 'attendance', 'shifts', 'leave', 'reports', 'calendar'
   ],
   [ROLES.AAYAH]: [
     'dashboard', 'attendance', 'shifts', 'leave', 'calendar'
@@ -409,10 +413,10 @@ export const ROLE_PERMISSIONS = {
     'dashboard', 'attendance', 'shifts', 'leave', 'calendar'
   ],
   [ROLES.ATTENDANCE_OFFICER]: [
-    'dashboard', 'attendance', 'shifts', 'leave', 'reports', 'calendar'
+    'dashboard', 'attendance', 'attendance_corrections', 'shifts', 'manage_shifts', 'leave', 'reports', 'calendar'
   ],
   [ROLES.HOD]: [
-    'dashboard', 'workforce', 'attendance', 'shifts', 'leave', 'analytics', 'reports', 'calendar'
+    'dashboard', 'workforce', 'employees', 'attendance', 'shifts', 'manage_shifts', 'leave', 'leave_approvals', 'analytics', 'reports', 'calendar'
   ],
   [ROLES.EMPLOYEE]: [
     'dashboard', 'attendance', 'shifts', 'leave', 'calendar'
@@ -542,13 +546,13 @@ export function AuthProvider({ children }) {
   };
 
   // Strict check: Super Admin gets all, others strictly check permissions array.
-  const hasPermission = (module) => {
+  const hasPermission = (moduleOrAction) => {
     if (!user) return false;
     if (user.role === ROLES.SUPER_ADMIN || user.role === 'Super Administrator' || user.role === 'Super Admin') {
       return true;
     }
     const permissions = ROLE_PERMISSIONS[user.role] || [];
-    return permissions.includes(module);
+    return permissions.includes(moduleOrAction);
   };
 
   const getAccessibleModules = () => {
@@ -558,6 +562,19 @@ export function AuthProvider({ children }) {
     }
     return ROLE_PERMISSIONS[user.role] || [];
   };
+
+  // Granular Action Permission Helpers
+  const canAddEmployee = () => hasPermission('add_employee');
+  const canEditEmployee = () => hasPermission('edit_employee');
+  const canManageDepartments = () => hasPermission('manage_departments');
+  const canManageRoles = () => hasPermission('manage_roles');
+  const canApproveLeave = () => hasPermission('leave_approvals');
+  const canProcessPayroll = () => hasPermission('process_payroll');
+  const canManageShifts = () => hasPermission('manage_shifts');
+  const canCorrectAttendance = () => hasPermission('attendance_corrections');
+  const canAccessCCTV = () => hasPermission('monitor');
+  const canAccessAuditLogs = () => hasPermission('audit');
+  const canAccessSettings = () => hasPermission('settings');
 
   // Role Scope & Data Guard Helpers
   const canAccessPatient = (patient) => {
@@ -587,6 +604,17 @@ export function AuthProvider({ children }) {
       logout,
       hasPermission,
       getAccessibleModules,
+      canAddEmployee,
+      canEditEmployee,
+      canManageDepartments,
+      canManageRoles,
+      canApproveLeave,
+      canProcessPayroll,
+      canManageShifts,
+      canCorrectAttendance,
+      canAccessCCTV,
+      canAccessAuditLogs,
+      canAccessSettings,
       canAccessPatient,
       canAccessClinicalDetails,
       ROLES,

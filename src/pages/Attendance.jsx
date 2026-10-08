@@ -9,6 +9,7 @@ import { todayStats, departmentCoverage } from "../data/employees";
 import PageBreadcrumb from "../components/common/PageBreadcrumb";
 import Badge from "../components/ui/badge/Badge";
 import Button from "../components/ui/button/Button";
+import { useAuth } from "../context/AuthContext";
 
 const SHIFTS = [
   { id: "A", name: "Morning", start: "06:00", end: "14:00", color: "#f59e0b" },
@@ -438,6 +439,7 @@ function AttendanceHistory() {
 
 // ── Main Attendance Component ─────────────────────────────────────────────────
 export default function Attendance() {
+  const { canCorrectAttendance } = useAuth();
   const [activeTab, setActiveTab]       = useState("today");
   const [search, setSearch]             = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -662,7 +664,7 @@ export default function Attendance() {
                 </div>
 
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  {corr.status === "Pending" ? (
+                  {corr.status === "Pending" && canCorrectAttendance() ? (
                     <>
                       <Button
                         variant="success"
@@ -682,7 +684,7 @@ export default function Attendance() {
                       </Button>
                     </>
                   ) : (
-                    <Badge variant="light" color={corr.status === "Approved" ? "success" : "error"} size="md">
+                    <Badge variant="light" color={corr.status === "Approved" ? "success" : corr.status === "Rejected" ? "error" : "warning"} size="md">
                       {corr.status}
                     </Badge>
                   )}

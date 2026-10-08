@@ -80,6 +80,13 @@ function getMockResponse(query, currentUser = null) {
     }
   }
 
+  // Security Rule 5: Doctor / Nurse / Clinical Staff asking for hospital payroll processing
+  if (['Doctor', 'Nurse', 'ICU Staff', 'OPD Staff', 'Laboratory Staff'].includes(role)) {
+    if (q.includes('payroll') || q.includes('gross payroll') || q.includes('process payroll')) {
+      return '⛔ **Access Denied: Financial Clearance Required**\n\nClinical roles are restricted from hospital financial payroll processing registers. Salary register access is restricted to Payroll Officers and Super Administrators.';
+    }
+  }
+
   if (q.includes('break') || q.includes('canteen') || q.includes('pantry')) return MOCK_RESPONSES['break'];
   if (q.includes('timeline') || q.includes('kd-emp-0001') || q.includes('ramesh')) return MOCK_RESPONSES['timeline'];
   if (q.includes('interaction') || q.includes('chit-chat') || q.includes('group') || q.includes('conversation')) return MOCK_RESPONSES['interactions'];

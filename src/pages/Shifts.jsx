@@ -5,6 +5,7 @@ import { employees } from '../data/employees';
 import PageBreadcrumb from '../components/common/PageBreadcrumb';
 import Badge from '../components/ui/badge/Badge';
 import Button from '../components/ui/button/Button';
+import { useAuth } from '../context/AuthContext';
 
 const SHIFTS = [
   { id: 'A', name: 'Morning Shift', code: 'Shift A', start: '06:00', end: '14:00', color: '#f59e0b', staff: 128 },
@@ -138,6 +139,7 @@ function EditShiftModal({ shift, onClose, onSave }) {
 }
 
 export default function Shifts() {
+  const { canManageShifts } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [shifts, setShifts] = useState(SHIFTS);
   const [editingShift, setEditingShift] = useState(null);
@@ -188,14 +190,16 @@ export default function Shifts() {
             { label: 'Shifts' }
           ]}
         />
-        <Button
-          variant="primary"
-          size="sm"
-          startIcon={<Plus className="w-4 h-4" />}
-          onClick={() => toast.success('New shift template dialog activated')}
-        >
-          Add Shift
-        </Button>
+        {canManageShifts() && (
+          <Button
+            variant="primary"
+            size="sm"
+            startIcon={<Plus className="w-4 h-4" />}
+            onClick={() => toast.success('New shift template dialog activated')}
+          >
+            Add Shift
+          </Button>
+        )}
       </div>
 
       {/* Tabs */}

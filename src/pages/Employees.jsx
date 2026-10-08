@@ -19,6 +19,8 @@ import Button from '../components/ui/button/Button';
 import PageBreadcrumb from '../components/common/PageBreadcrumb';
 import ComponentCard from '../components/common/ComponentCard';
 
+import { useAuth } from '../context/AuthContext';
+
 const shiftColorMap = {
   Morning: 'warning',
   Evening: 'info',
@@ -176,6 +178,7 @@ function AddEmployeeModal({ onClose, onAdd }) {
 
 export default function Employees() {
   const navigate = useNavigate();
+  const { canAddEmployee } = useAuth();
   const [empList, setEmpList] = useState(initialEmployees);
   const [search, setSearch] = useState('');
   const [deptFilter, setDeptFilter] = useState('ALL');
@@ -282,14 +285,16 @@ export default function Employees() {
               </button>
             </div>
 
-            <Button
-              variant="primary"
-              size="sm"
-              startIcon={<Plus className="h-4 w-4" />}
-              onClick={() => setShowAddModal(true)}
-            >
-              Add Staff
-            </Button>
+            {canAddEmployee() && (
+              <Button
+                variant="primary"
+                size="sm"
+                startIcon={<Plus className="h-4 w-4" />}
+                onClick={() => setShowAddModal(true)}
+              >
+                Add Staff
+              </Button>
+            )}
           </div>
         </div>
       </ComponentCard>

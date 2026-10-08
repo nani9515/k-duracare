@@ -3,6 +3,7 @@ import { Shield, Users, Check, X, Search, Sparkles, Award, UserCheck, ChevronRig
 import PageBreadcrumb from '../components/common/PageBreadcrumb';
 import Badge from '../components/ui/badge/Badge';
 import Button from '../components/ui/button/Button';
+import { useAuth } from '../context/AuthContext';
 
 const ROLES_DATA = [
   {
@@ -184,6 +185,7 @@ const ROLES_DATA = [
 ];
 
 export default function Roles() {
+  const { canManageRoles, user } = useAuth();
   const [selectedRole, setSelectedRole]         = useState(ROLES_DATA[0]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchTerm, setSearchTerm]             = useState('');
