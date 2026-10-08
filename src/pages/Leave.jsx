@@ -1,10 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Calendar, Clock, Check, X, Sparkles, AlertTriangle, User,
   Plus, ChevronLeft, ChevronRight, FileText, BarChart3, Filter
 } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { leaveRequests, leaveBalances, leaveCalendarData } from "../data/leaves";
+import { leaveRequests, leaveBalances as initialBalances, leaveCalendarData } from "../data/leaves";
 import { employees } from "../data/employees";
 import { useAuth } from "../context/AuthContext";
 import PageBreadcrumb from "../components/common/PageBreadcrumb";
@@ -38,10 +39,36 @@ const DAYS   = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 // ─── Apply Leave Modal ────────────────────────────────────────────────────────
 function ApplyLeaveModal({ onClose, onSubmit, currentUser }) {
   const [form, setForm] = useState({
-    empId: currentUser?.empId || "",
-    type: "Casual Leave", from: "", to: "", reason: "",
+    empId: currentUser?.empId || currentUser?.id || "",
+    type: "Casual Leave",
+    from: "",
+    to: "",
+    reason: "",
   });
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (currentUser && !form.empId) {
+      setForm(p => ({ ...p, empId: currentUser.empId || currentUser.id || "" }));
+    }
+  }, [currentUser]);
+
+  const allSelectEmployees = useMemo(() => {
+    const list = [...employees];
+    if (currentUser) {
+      const userEmpId = currentUser.empId || currentUser.id;
+      const exists = list.some(e => (e.empId || e.id) === userEmpId);
+      if (!exists) {
+        list.unshift({
+          id: currentUser.id,
+          empId: userEmpId || 'KD-EMP-SELF',
+          name: currentUser.name,
+          department: currentUser.dept || 'Department'
+        });
+      }
+    }
+    return list;
+  }, [currentUser]);
 
   const days = form.from && form.to
     ? Math.max(1, Math.ceil((new Date(form.to) - new Date(form.from)) / 86400000) + 1)
@@ -60,7 +87,7 @@ function ApplyLeaveModal({ onClose, onSubmit, currentUser }) {
       return;
     }
     setLoading(true);
-    await new Promise(r => setTimeout(r, 800));
+    await new Promise(r => setTimeout(r, 600));
     onSubmit(form);
     toast.success("Leave application submitted successfully!");
     setLoading(false);
@@ -90,7 +117,7 @@ function ApplyLeaveModal({ onClose, onSubmit, currentUser }) {
               required
             >
               <option value="">Choose employee...</option>
-              {employees.slice(0, 20).map(emp => (
+              {allSelectEmployees.slice(0, 25).map(emp => (
                 <option key={emp.empId || emp.id} value={emp.empId || emp.id}>
                   {emp.name} — {emp.department} ({emp.empId || emp.id})
                 </option>
@@ -453,10 +480,42 @@ function LeaveCard({ req, onAction }) {
 // ─── Main Leave Component ─────────────────────────────────────────────────────
 export default function Leave() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab]       = useState("requests");
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const [requests, setRequests]         = useState(leaveRequests);
+  const [balances, setBalances]         = useState(initialBalances);
   const [showApply, setShowApply]       = useState(false);
   const [statusFilter, setStatusFilter] = useState("All");
+
+  // Synchronize active tab with URL subroute
+  const activeTab = useMemo(() => {
+    const path = location.pathname;
+    if (path.includes('/leave/balance')) return 'balance';
+    if (path.includes('/leave/calendar')) return 'calendar';
+    if (path.includes('/leave/pending')) return 'pending';
+    return 'requests';
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (location.pathname.includes('/leave/apply')) {
+      setShowApply(true);
+    }
+  }, [location.pathname]);
+
+  const handleTabChange = (tabId) => {
+    if (tabId === 'requests') navigate('/leave/requests');
+    else if (tabId === 'pending') navigate('/leave/requests');
+    else if (tabId === 'calendar') navigate('/leave/calendar');
+    else if (tabId === 'balance') navigate('/leave/balance');
+  };
+
+  const handleCloseModal = () => {
+    setShowApply(false);
+    if (location.pathname.includes('/leave/apply')) {
+      navigate('/leave/requests');
+    }
+  };
 
   const pending  = requests.filter(r => r.status === "Pending");
   const filtered = requests.filter(r => statusFilter === "All" || r.status === statusFilter);
@@ -469,23 +528,43 @@ export default function Leave() {
   };
 
   const handleNewLeave = (form) => {
-    const emp = employees.find(e => (e.empId || e.id) === form.empId);
+    const emp = employees.find(e => (e.empId || e.id) === form.empId) || (
+      (user?.empId === form.empId || user?.id === form.empId) ? user : null
+    );
+
+    const fromDate = new Date(form.from);
+    const toDate   = new Date(form.to);
+    const calcDays = Math.max(1, Math.ceil((toDate - fromDate) / 86400000) + 1);
+
     const newReq = {
       id: `LR-${Date.now()}`,
-      employeeId: form.empId,
-      employeeName: emp?.name || form.empId,
-      department: emp?.department || "N/A",
+      employeeId: form.empId || user?.empId || "KD-EMP-0001",
+      employeeName: emp?.name || user?.name || form.empId,
+      department: emp?.department || user?.dept || "General",
       leaveType: form.type,
       type: form.type,
       from: form.from,
       to: form.to,
-      days: Math.max(1, Math.ceil((new Date(form.to) - new Date(form.from)) / 86400000) + 1),
+      days: calcDays,
       reason: form.reason,
       status: "Pending",
       appliedOn: new Date().toISOString().split("T")[0],
       approvedBy: null,
     };
+
     setRequests(prev => [newReq, ...prev]);
+
+    // Dynamically deduct / update leave balance
+    setBalances(prev => prev.map(b => {
+      if (b.type === form.type || b.code === form.type) {
+        return {
+          ...b,
+          pending: (b.pending || 0) + 1,
+          available: Math.max(0, (b.available || 0) - calcDays)
+        };
+      }
+      return b;
+    }));
   };
 
   const TABS = [
@@ -542,7 +621,7 @@ export default function Leave() {
                   ? "bg-white text-brand-600 shadow-xs dark:bg-brand-500 dark:text-white"
                   : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
               }`}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
             >
               {tab.label}
             </button>
@@ -582,12 +661,12 @@ export default function Leave() {
       {activeTab === "calendar" && <HospitalCalendar requests={requests} />}
 
       {/* Balance */}
-      {activeTab === "balance" && <MyBalance balances={leaveBalances} />}
+      {activeTab === "balance" && <MyBalance balances={balances} />}
 
       {/* Modal */}
       {showApply && (
         <ApplyLeaveModal
-          onClose={() => setShowApply(false)}
+          onClose={handleCloseModal}
           onSubmit={handleNewLeave}
           currentUser={user}
         />
