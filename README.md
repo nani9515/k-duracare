@@ -19,7 +19,7 @@ Designed for high-reliability medical environments such as **Kanakadurga Hospita
 
 ```
                       ┌──────────────────────────────────────────┐
-                      │     K-DURACARE HOSPITAL COMMAND CENTER    │
+                      │     K-DURACARE HOSPITAL COMMAND CENTER   │
                       └────────────────────┬─────────────────────┘
                                            │
          ┌───────────────────┬─────────────┴─────────────┬───────────────────┐
